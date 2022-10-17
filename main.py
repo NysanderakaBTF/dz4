@@ -1,6 +1,8 @@
 import json
 import hashlib
 import os
+import sys
+
 from make_graph import Graph
 
 d = {}
@@ -55,7 +57,14 @@ def run_make(li):
     for i in li:
         print(i)
         if i.find('.') != -1:
-            if db.get(i):
+            if len(db.get(i)) == 0:
+                if isinstance(d[i + "_comands"], list):
+                    for q in d[i + "_comands"]:
+                        os.system(str(q))
+
+                else:
+                    os.system(str(d[i + "_comands"]))
+            elif db.get(i):
                 if db[i] != md5(i):
                     try:
                         if isinstance(d[i + "_comands"], list):
@@ -67,6 +76,8 @@ def run_make(li):
                         db[i] = md5(i)
                     except KeyError:
                         db[i] = md5(i)
+                        run_make(li)
+
 
             else:
                 try:
@@ -79,6 +90,7 @@ def run_make(li):
                     db[i] = md5(i)
                 except KeyError:
                     db[i] = md5(i)
+                    run_make(li)
 
         else:
             if isinstance(d[i + "_comands"], list):
@@ -96,4 +108,13 @@ d = get_com_dict(f)
 g = form_graph(len(col), d)
 print(d)
 makellist = g.topologicalSort()
-run_make(makellist)
+
+args = sys.argv
+if len(args)>1:
+    if args[1]=='clean':
+        run_make(['clean_comands'])
+    else:
+        i = makellist.index(args[1])
+        run_make(makellist[:(i+1)])
+else:
+    run_make(makellist)
