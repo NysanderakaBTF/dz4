@@ -49,9 +49,11 @@ def md5(fname):
     return hash_md5.hexdigest()
 
 def run_make(li):
+    print(li)
     global d
     db = json.loads(open('db.json').read())
     for i in li:
+        print(i)
         if i.find('.') != -1:
             if db.get(i):
                 if db[i] != md5(i):
@@ -63,8 +65,9 @@ def run_make(li):
                         else:
                             os.system(str(d[i + "_comands"]))
                         db[i] = md5(i)
-                    except:
-                        pass
+                    except KeyError:
+                        db[i] = md5(i)
+
             else:
                 try:
                     if isinstance(d[i + "_comands"], list):
@@ -74,8 +77,8 @@ def run_make(li):
                     else:
                         os.system(str(d[i + "_comands"]))
                     db[i] = md5(i)
-                except:
-                    pass
+                except KeyError:
+                    db[i] = md5(i)
 
         else:
             if isinstance(d[i + "_comands"], list):
