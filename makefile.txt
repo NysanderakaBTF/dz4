@@ -1,24 +1,16 @@
-dress: trousers shoes jacket
-    @echo "All done. Let's go outside!"
+all: hello
 
-jacket: pullover
-    @echo "Putting on jacket."
+hello: main.o factorial.o hello.o
+	g++ main.o factorial.o hello.o -o hello
 
-pullover: shirt
-    @echo "Putting on pullover."
+main.o: main.cpp
+	g++ -c main.cpp
 
-shirt:
-    @echo "Putting on shirt."
+factorial.o: factorial.cpp
+	g++ -c factorial.cpp
 
-trousers: underpants
-    @echo "Putting on trousers."
+hello.o: hello.cpp
+	g++ -c hello.cpp
 
-underpants:
-    @echo "Putting on underpants."
-
-shoes: socks
-    @echo "Putting on shoes."
-
-socks: pullover
-    @echo "Putting on socks."
-
+clean:
+	rm -rf *.o hello

@@ -48,20 +48,35 @@ def md5(fname):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-
 def run_make(li):
     global d
     db = json.loads(open('db.json').read())
     for i in li:
         if i.find('.') != -1:
-            if db[i] != md5(i):
-                if isinstance(d[i + "_comands"], list):
-                    for q in d[i + "_comands"]:
-                        os.system(str(q))
+            if db.get(i):
+                if db[i] != md5(i):
+                    try:
+                        if isinstance(d[i + "_comands"], list):
+                            for q in d[i + "_comands"]:
+                                os.system(str(q))
 
-                else:
-                    os.system(str(d[i + "_comands"]))
-                db[i] = md5(i)
+                        else:
+                            os.system(str(d[i + "_comands"]))
+                        db[i] = md5(i)
+                    except:
+                        pass
+            else:
+                try:
+                    if isinstance(d[i + "_comands"], list):
+                        for q in d[i + "_comands"]:
+                            os.system(str(q))
+
+                    else:
+                        os.system(str(d[i + "_comands"]))
+                    db[i] = md5(i)
+                except:
+                    pass
+
         else:
             if isinstance(d[i + "_comands"], list):
                 for q in d[i + "_comands"]:
@@ -69,10 +84,13 @@ def run_make(li):
 
             else:
                 os.system(str(d[i + "_comands"]))
+    file = open("db.json", "w")
+    file.write(json.dumps(db))
+    file.close()
 
 
 d = get_com_dict(f)
 g = form_graph(len(col), d)
-
+print(d)
 makellist = g.topologicalSort()
 run_make(makellist)
