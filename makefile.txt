@@ -9,8 +9,11 @@ main.cpp:
 factorial.cpp:
 	g++ -c factorial.cpp
 
-hello.cpp:
+hello.cpp: saycmd
 	g++ -c hello.cpp
 
 clean:
 	rm -rf *.o hello
+
+saycmd:
+    @echo "I hate this"

@@ -40,6 +40,7 @@ def form_graph(col, d={}):
                     g.addEdge(qq, i)
             else:
                 g.addEdge(d[i], i)
+
     return g
 
 
@@ -51,6 +52,7 @@ def md5(fname):
     return hash_md5.hexdigest()
 
 def run_make(li):
+    li.reverse()
     print(li)
     global d
     db = json.loads(open('db.json').read())
@@ -103,18 +105,31 @@ def run_make(li):
     file.write(json.dumps(db))
     file.close()
 
+def form_sub_graph(actname, gr):
+    global d
+    if actname in d.keys():
+        print(d[actname])
+        if isinstance(d[actname], list):
+            for qq in d[actname]:
+                gr.addEdge(qq, actname)
+                form_sub_graph(qq,gr)
+        else:
+            gr.addEdge(d[actname], actname)
+    return gr
 
 d = get_com_dict(f)
 g = form_graph(len(col), d)
 print(d)
 makellist = g.topologicalSort()
 
+
 args = sys.argv
 if len(args)>1:
     if args[1]=='clean':
-        run_make(['clean_comands'])
+        run_make(['clean'])
     else:
-        i = makellist.index(args[1])
-        run_make(makellist[:(i+1)])
+        gg = form_sub_graph(args[1], Graph(0))
+        newli = gg.topologicalSort()
+        run_make(newli)
 else:
     run_make(makellist)

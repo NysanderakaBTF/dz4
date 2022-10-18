@@ -9,8 +9,10 @@ class Graph:
         self.numberofVertices = numberofVertices
 
     def addEdge(self, vertex, edge):
-        self.graph.setdefault(vertex,[])
-        self.graph[vertex].append(edge)
+        # self.graph.setdefault(vertex,[])
+        # self.graph[vertex].append(edge)
+        self.graph.setdefault(edge, [])
+        self.graph[edge].append(vertex)
 
     def topogologicalSortUtil(self, v, visited, stack):
         visited.append(v)

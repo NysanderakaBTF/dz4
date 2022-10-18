@@ -6,6 +6,6 @@ using namespace std;
 int main(){
     print_hello();
     cout << endl;
-    cout << "The factorial of 5 is " << factorial(5) << endl;
+    cout << "The factorial of 20 is " << factorial(20) << endl;
     return 0;
 }
