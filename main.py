@@ -56,16 +56,24 @@ def run_make(li):
     print(li)
     global d
     db = json.loads(open('db.json').read())
+    if not isinstance(db,dict):
+        db={}
+    print(db)
     for i in li:
         print(i)
         if i.find('.') != -1:
-            if len(db.get(i)) == 0:
+            print(db.get(i))
+            if db.get(i) == None:
                 if isinstance(d[i + "_comands"], list):
                     for q in d[i + "_comands"]:
                         os.system(str(q))
-
                 else:
                     os.system(str(d[i + "_comands"]))
+                try:
+                    if db[i] != md5(i):
+                        db[i] = md5(i)
+                except:
+                    db[i] = md5(i)
             elif db.get(i):
                 if db[i] != md5(i):
                     try:
@@ -110,6 +118,8 @@ def form_sub_graph(actname, gr):
     if actname in d.keys():
         print(d[actname])
         if isinstance(d[actname], list):
+            if len(d[actname])==0:
+                gr.addEdge(actname,actname)
             for qq in d[actname]:
                 gr.addEdge(qq, actname)
                 form_sub_graph(qq,gr)
@@ -127,9 +137,14 @@ args = sys.argv
 if len(args)>1:
     if args[1]=='clean':
         run_make(['clean'])
+        file = open("db.json", "w")
+        di = {}
+        file.write(json.dumps(di))
+        file.close()
     else:
         gg = form_sub_graph(args[1], Graph(0))
         newli = gg.topologicalSort()
+        print(newli)
         run_make(newli)
 else:
     run_make(makellist)
