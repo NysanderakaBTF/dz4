@@ -1,150 +1,129 @@
-import json
-import hashlib
 import os
 import sys
+import json
+import hashlib
 
-from make_graph import Graph
-
-d = {}
-f = open('makefile.txt').readlines()
-col = set()
+from graph import Graph
 
 
-def get_com_dict(f):
-    global col
-    d = {}
-    prevss = ""
-    for i in f:
-        i = i.replace('\n', '')
-        ss = i.split(' ')
-        if i != '' and i[0] != ' ' and i[0] != '\t':
-            d[ss[0][:-1]] = ss[1:]
-            prevss = ss[0][:-1]
-            col.add(prevss)
-            for _ in ss[1:]:
-                col.add(_)
+def create_dictionary_commands(make_file, count_commands):
+    previous = ""
+    dictionary_commands = {}
+
+    for line in make_file:
+        line = line.replace('\n', '')
+        words = line.split(' ')
+        if line != '' and line[0] != ' ' and line[0] != '\t':
+            dictionary_commands[words[0][:-1]] = words[1:]
+            previous = words[0][:-1]
+            count_commands.add(previous)
+            for i in words[1:]:
+                count_commands.add(i)
         else:
-            try:
-                d.setdefault(prevss + "_comands", i)
-            except KeyError:
-                d[prevss + "_comands"] = i
-    return d
+            # try:
+            dictionary_commands.setdefault(previous + "_comands", line)
+            # except KeyError:
+            #     dictionary_commands[prevss + "_comands"] = i
+    return dictionary_commands
 
 
-def form_graph(col, d={}):
-    g = Graph(col)
-    for i in d.keys():
-        if not str(i).__contains__("_comands"):
-            if isinstance(d[i], list):
-                for qq in d[i]:
-                    g.addEdge(qq, i)
+def create_graph(count_commands, dictionary_commands):
+    graph = Graph(count_commands)
+    for key in dictionary_commands.keys():
+        if "_comands" not in str(key):
+            if isinstance(dictionary_commands[key], list):
+                for i in dictionary_commands[key]:
+                    graph.insert_node(i, key)
             else:
-                g.addEdge(d[i], i)
+                graph.insert_node(dictionary_commands[key], key)
+    return graph
 
-    return g
 
-
-def md5(fname):
+def get_hash_file(file_name):
     hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
+    with open(file_name, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def run_make(li):
-    li.reverse()
-    print(li)
-    global d
-    db = json.loads(open('db.json').read())
-    if not isinstance(db,dict):
-        db={}
-    print(db)
-    for i in li:
-        print(i)
+
+def run_make(make_list, dictionary_commands):
+    make_list.reverse()
+    cache = json.loads(open('__cache__').read())
+    if not isinstance(cache, dict):
+        cache = {}
+    for i in make_list:
         if i.find('.') != -1:
-            print(db.get(i))
-            if db.get(i) == None:
-                if isinstance(d[i + "_comands"], list):
-                    for q in d[i + "_comands"]:
-                        os.system(str(q))
+            if cache.get(i) == None:
+                if isinstance(dictionary_commands[i + "_comands"], list):
+                    for command in dictionary_commands[i + "_comands"]:
+                        os.system(str(command))
                 else:
-                    os.system(str(d[i + "_comands"]))
+                    os.system(str(dictionary_commands[i + "_comands"]))
                 try:
-                    if db[i] != md5(i):
-                        db[i] = md5(i)
+                    if cache[i] != get_hash_file(i):
+                        cache[i] = get_hash_file(i)
                 except:
-                    db[i] = md5(i)
-            elif db.get(i):
-                if db[i] != md5(i):
+                    cache[i] = get_hash_file(i)
+            elif cache.get(i):
+                if cache[i] != get_hash_file(i):
                     try:
-                        if isinstance(d[i + "_comands"], list):
-                            for q in d[i + "_comands"]:
-                                os.system(str(q))
-
+                        if isinstance(dictionary_commands[i + "_comands"], list):
+                            for command in dictionary_commands[i + "_comands"]:
+                                os.system(str(command))
                         else:
-                            os.system(str(d[i + "_comands"]))
-                        db[i] = md5(i)
+                            os.system(str(dictionary_commands[i + "_comands"]))
+                        cache[i] = get_hash_file(i)
                     except KeyError:
-                        db[i] = md5(i)
-                        run_make(li)
-
-
-            else:
-                try:
-                    if isinstance(d[i + "_comands"], list):
-                        for q in d[i + "_comands"]:
-                            os.system(str(q))
-
-                    else:
-                        os.system(str(d[i + "_comands"]))
-                    db[i] = md5(i)
-                except KeyError:
-                    db[i] = md5(i)
-                    run_make(li)
-
+                        cache[i] = get_hash_file(i)
+                        run_make(make_list, dictionary_commands)
         else:
-            if isinstance(d[i + "_comands"], list):
-                for q in d[i + "_comands"]:
-                    os.system(str(q))
-
+            if isinstance(dictionary_commands[i + "_comands"], list):
+                for command in dictionary_commands[i + "_comands"]:
+                    os.system(str(command))
             else:
-                os.system(str(d[i + "_comands"]))
-    file = open("db.json", "w")
-    file.write(json.dumps(db))
+                os.system(str(dictionary_commands[i + "_comands"]))
+    generate_cache(cache)
+
+
+def generate_cache(cache):
+    file = open("__cache__", "w")
+    file.write(json.dumps(cache))
     file.close()
 
-def form_sub_graph(actname, gr):
-    global d
-    if actname in d.keys():
-        print(d[actname])
-        if isinstance(d[actname], list):
-            if len(d[actname])==0:
-                gr.addEdge(actname,actname)
-            for qq in d[actname]:
-                gr.addEdge(qq, actname)
-                form_sub_graph(qq,gr)
+
+def create_sub_graph(command, graph, dictionary_commands):
+    if command in dictionary_commands.keys():
+        if isinstance(dictionary_commands[command], list):
+            if len(dictionary_commands[command]) == 0:
+                graph.insert_node(command, command)
+            for qq in dictionary_commands[command]:
+                graph.insert_node(qq, command)
+                create_sub_graph(qq, graph, dictionary_commands)
         else:
-            gr.addEdge(d[actname], actname)
-    return gr
-
-d = get_com_dict(f)
-g = form_graph(len(col), d)
-print(d)
-makellist = g.topologicalSort()
+            graph.insert_node(dictionary_commands[command], command)
+    return graph
 
 
-args = sys.argv
-if len(args)>1:
-    if args[1]=='clean':
-        run_make(['clean'])
-        file = open("db.json", "w")
-        di = {}
-        file.write(json.dumps(di))
-        file.close()
+if __name__ == "__main__":
+
+    dictionary_commands = {}
+    makefile = open('makefile.txt').readlines()
+    count_commands = set()
+
+    dictionary_commands = create_dictionary_commands(makefile, count_commands)
+    graph = create_graph(len(count_commands), dictionary_commands)
+
+    make_list = graph.sort_topologial()
+
+    args = sys.argv
+    if len(args) > 1:
+        if args[1] == 'clean':
+            run_make([args[1]], dictionary_commands)
+            generate_cache({})
+        else:
+            graph = create_sub_graph(args[1], Graph(0), dictionary_commands)
+            sort_list_graph = graph.sort_topologial()
+            run_make(sort_list_graph, dictionary_commands)
     else:
-        gg = form_sub_graph(args[1], Graph(0))
-        newli = gg.topologicalSort()
-        print(newli)
-        run_make(newli)
-else:
-    run_make(makellist)
+        run_make(make_list, dictionary_commands)

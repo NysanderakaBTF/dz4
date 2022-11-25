@@ -16,4 +16,4 @@ clean:
 	rm -rf *.o hello
 
 saycmd:
-    @echo "I hate this"
+    echo "I love this"
